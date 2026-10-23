@@ -53,6 +53,29 @@ dn_uid_of() {
     | sed 's/.*uid:\([0-9]*\).*/\1/'
 }
 
+# 当前存在的所有用户 id（主空间 0 / 小云空间 10~14 / 应用分身 999）
+dn_users() {
+  _us=$(pm list users 2>/dev/null | sed -n 's/.*UserInfo{\([0-9]*\):.*/\1/p' | tr '\n' ' ')
+  [ -z "$_us" ] && _us=0
+  echo "$_us"
+}
+
+# 建立 包名|uid 全量映射（覆盖所有用户），写入 $1
+# Android 的 uid = userId * 100000 + appId，直接由 PackageManager 给出的最准
+dn_build_uidmap() {
+  : > "$1"
+  for _u in $(dn_users); do
+    pm list packages -U --user "$_u" 2>/dev/null \
+      | sed -n 's/^package:\([^ ]*\) uid:\([0-9]*\).*/\1|\2/p' >> "$1"
+  done
+}
+
+# 某个包在所有用户下的 uid 列表
+dn_uids_of() {
+  [ -f "$DN_UIDMAP" ] || return 0
+  awk -F'|' -v p="$1" '$1 == p { print $2 }' "$DN_UIDMAP"
+}
+
 dn_clear_rules() {
   while iptables -t mangle -S OUTPUT 2>/dev/null | grep -q "comment $TAG"; do
     r=$(iptables -t mangle -S OUTPUT 2>/dev/null | grep "comment $TAG" | head -1 | sed 's/^-A /-D /')
@@ -67,9 +90,9 @@ dn_clear_rules() {
 #   2) iptables MARK：兜底，给已绑定其他接口的包打标记
 # 注意：必须先探测接口/mark 成功才清理旧规则，否则接口抖动会误删规则
 dn_clear_iprules() {
-  # 只清理我们自己用的 15060-15099 段，避开系统规则（15040 等）
+  # 只清理我们自己用的 15060-15990 段，避开系统规则（15040 / 16000 等）
   ip rule show 2>/dev/null \
-    | awk -F: '$1 >= 15060 && $1 <= 15099 {print $1}' \
+    | awk -F: '$1 >= 15060 && $1 <= 15990 {print $1}' \
     | while read -r p; do
         [ -n "$p" ] && ip rule del pref "$p" 2>/dev/null
       done
@@ -91,16 +114,20 @@ dn_apply_routes() {
   dn_clear_rules
   dn_clear_iprules
 
+  # 建立全用户 uid 映射（主空间 / 小云空间 / 应用分身）
+  DN_UIDMAP=$CONFDIR/.uidmap.tmp
+  dn_build_uidmap "$DN_UIDMAP"
+
   n=0
   pref=15060
   for pkg in $(grep -vE '^[[:space:]]*(#|$)' "$APPS_CONF" 2>/dev/null); do
-    uid=$(dn_uid_of "$pkg")
-    [ -z "$uid" ] && continue
+    uids=$(dn_uids_of "$pkg")
+    [ -z "$uids" ] && continue
     n=$((n+1))
 
-    for u in "$uid" "1$uid"; do
+    for u in $uids; do
       # 关键：按 uid 强制路由到移动数据表，connect 时即选中正确源地址
-      if [ "$pref" -le 15099 ]; then
+      if [ "$pref" -le 15990 ]; then
         ip rule add from all uidrange "$u-$u" lookup "$IF" pref "$pref" 2>/dev/null
         pref=$((pref+1))
       fi
@@ -113,6 +140,8 @@ dn_apply_routes() {
       fi
     done
   done
+
+  rm -f "$DN_UIDMAP"
   echo "$IF $MK $n"
 }
 

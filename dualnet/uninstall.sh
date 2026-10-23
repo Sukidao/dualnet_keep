@@ -10,7 +10,7 @@ for p in $(ps -A -o PID,ARGS 2>/dev/null | grep "notify_status.sh" | grep -v gre
   kill "$p" 2>/dev/null
 done
 
-ip rule show 2>/dev/null | awk -F: '$1 >= 15060 && $1 <= 15099 {print $1}' \
+ip rule show 2>/dev/null | awk -F: '$1 >= 15060 && $1 <= 15990 {print $1}' \
   | while read -r p; do [ -n "$p" ] && ip rule del pref "$p" 2>/dev/null; done
 
 while iptables -t mangle -S OUTPUT 2>/dev/null | grep -q "comment $TAG"; do

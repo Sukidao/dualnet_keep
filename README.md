@@ -46,7 +46,21 @@ iptables -t mangle -I OUTPUT -m owner --uid-owner <uid> -j MARK --set-xmark 0x10
 
 给已经建立的连接补充标记，覆盖部分边缘场景。
 
-### 3. 保持数据通路
+### 3. 多用户 / 应用分身
+
+分流规则覆盖设备上**所有用户**，不只是主空间：
+
+| 用户 | 说明 | 微信的 UID |
+|---|---|---|
+| 0 | 主空间 | `10336` |
+| 10~14 | 第二空间 / 小云空间 | `1010336` ~ `1410336` |
+| 999 | 应用分身（XSpace） | `99910336` |
+
+UID 由 `userId × 100000 + appId` 得出，直接通过 `pm list packages -U --user <id>` 读取 PackageManager 的真实值，不靠字符串拼接推算（早期版本用 `"1$uid"` 拼接，遇到 4 位 appId 会算错）。
+
+应用列表同样合并了所有用户的第三方应用，按包名去重。
+
+### 4. 保持数据通路
 
 - 维护 `mobile_data` / `mobile_data_always_active` / `mobile_data_always_on` 三个设置项
 - 常驻进程通过 `ConnectivityManager.requestNetwork(CELLULAR)` 向系统声明「有应用需要蜂窝网络」，阻止 WiFi 连接时 PDN 被回收

@@ -31,9 +31,18 @@ _build_apps_list() {
     fi
   fi
 
+  # 收集所有用户（主空间 / 小云空间 / 应用分身）的第三方应用，按包名去重
   TMP1=$CONFDIR/.apps1.tmp
-  pm list packages -3 -U 2>/dev/null \
-    | sed -n 's/^package:\([^ ]*\) uid:\([0-9]*\).*/\1|\2/p' | sort > "$TMP1"
+  TMP2=$CONFDIR/.apps2.tmp
+  : > "$TMP1"
+  for _u in $(dn_users); do
+    pm list packages -3 -U --user "$_u" 2>/dev/null \
+      | sed -n 's/^package:\([^ ]*\) uid:\([0-9]*\).*/\1|\2/p' >> "$TMP1"
+  done
+  # 同一个包在多个用户下只保留最小 uid（通常是主空间）
+  sort -t'|' -k1,1 -k2,2n "$TMP1" | awk -F'|' '!seen[$1]++' > "$TMP2"
+  mv -f "$TMP2" "$TMP1"
+
   if [ -s "$LABELS" ]; then
     awk -F'|' 'NR==FNR{lbl[$1]=$2; next}
       {n=split($0,a,"|"); print a[1]"|"a[2]"|"((a[1] in lbl)?lbl[a[1]]:a[1])}' "$LABELS" "$TMP1"
