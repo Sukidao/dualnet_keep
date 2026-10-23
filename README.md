@@ -60,6 +60,8 @@ UID 由 `userId × 100000 + appId` 得出，直接通过 `pm list packages -U --
 
 应用列表同样合并了所有用户的第三方应用，按包名去重。
 
+> WebUI 中的勾选按**包名**记录，一次勾选会同时作用于该应用在所有空间下的副本。若需要「主空间走 WiFi、分身走流量」这类精细控制，需改成按「包名 + 用户 ID」记录，目前未实现。
+
 ### 4. 保持数据通路
 
 - 维护 `mobile_data` / `mobile_data_always_active` / `mobile_data_always_on` 三个设置项
