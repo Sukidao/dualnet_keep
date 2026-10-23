@@ -62,7 +62,31 @@ UID 由 `userId × 100000 + appId` 得出，直接通过 `pm list packages -U --
 
 > WebUI 中的勾选按**包名**记录，一次勾选会同时作用于该应用在所有空间下的副本。若需要「主空间走 WiFi、分身走流量」这类精细控制，需改成按「包名 + 用户 ID」记录，目前未实现。
 
-### 4. 保持数据通路
+### 4. 漏包监控
+
+分流是否真的生效，用数据说话。模块在 `filter` 表为每个白名单 UID 挂了一条计数器：
+
+```bash
+iptables -I OUTPUT -m owner --uid-owner <uid> -o wlan0 \
+  -m comment --comment dn_wifi_probe -j RETURN
+```
+
+守护进程每 30 秒读一次。**计数增长就说明有包从 WiFi 漏出去了**，会写日志并发一条通知（10 分钟冷却），WebUI 的「路由标记」卡片也会显示累计漏包数。
+
+实测正常情况下恒为 0：
+
+```
+0 包  uid 10403 拼多多
+0 包  uid 10336 微信
+```
+
+可能导致漏包的三种情况：
+
+1. **App 主动绑定 WiFi**：`bindProcessToNetwork(WIFI)` 会让 netd 添加 `pref 15040` 的规则，优先级高于我们的 `15060`
+2. **接口切换空窗**：`rmnet_data3` → `rmnet_data4` 重建期间，规则仍指向旧表
+3. **规则被 netd 重置**：网络模式切换可能清掉 ip rule，靠 30 秒轮询 + 10 分钟兜底重建
+
+### 5. 保持数据通路
 
 - 维护 `mobile_data` / `mobile_data_always_active` / `mobile_data_always_on` 三个设置项
 - 常驻进程通过 `ConnectivityManager.requestNetwork(CELLULAR)` 向系统声明「有应用需要蜂窝网络」，阻止 WiFi 连接时 PDN 被回收
@@ -78,6 +102,7 @@ UID 由 `userId × 100000 + appId` 得出，直接通过 `pm list packages -U --
 | 应用图标 | 真实图标以 webp + base64 内联，按版本号缓存，不重复传输 |
 | 公网 IP 查询 | 分别通过 WiFi / 蜂窝网络请求，显示两条链路的实际出口 IP |
 | 状态栏常驻通知 | 实时显示当前前台应用走流量还是 WiFi，带应用图标 |
+| WiFi 漏包监控 | 按 UID 统计白名单应用从 WiFi 出去的包，非 0 时发通知告警 |
 | 秒开 | 应用列表与图标均三层缓存（后端文件 → localStorage → 版本校验） |
 
 ## 安装

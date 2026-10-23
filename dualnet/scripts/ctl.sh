@@ -77,6 +77,7 @@ status)
   echo "notify=$([ -f "$CONFDIR/notify_off" ] && echo 0 || echo 1)"
   echo "daemon=$(dn_daemon_alive)"
   echo "rule_count=$(iptables -t mangle -S OUTPUT 2>/dev/null | grep -c "comment $TAG")"
+  echo "wifi_leak=$(awk '$2 > 0 { s += $2 } END { print s + 0 }' "$CONFDIR/wifi_leak.state" 2>/dev/null)"
   echo "app_count=$(grep -vcE '^[[:space:]]*(#|$)' "$APPS_CONF" 2>/dev/null)"
   echo "version=$(grep -m1 '^version=' "$MODDIR/module.prop" | cut -d= -f2)"
   ;;

@@ -148,3 +148,14 @@ dn_apply_routes() {
 dn_daemon_alive() {
   pgrep -f "dualnet_keep/service.sh" >/dev/null 2>&1 && echo 1 || echo 0
 }
+
+# 以 shell 用户发通知（root 的 POST_NOTIFICATION 被系统禁用）
+dn_notify() {
+  _bb=/data/adb/ksu/bin/busybox
+  [ -x "$_bb" ] || _bb=/data/adb/magisk/busybox
+  if [ -x "$_bb" ]; then
+    $_bb setuidgid 2000 cmd notification post -S bigtext -t "$1" "$2" "$3" >/dev/null 2>&1
+  else
+    su 2000 -c "cmd notification post -S bigtext -t \"$1\" \"$2\" \"$3\"" >/dev/null 2>&1
+  fi
+}

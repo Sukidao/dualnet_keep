@@ -109,6 +109,11 @@ async function loadStatus(silent) {
     $('mark').textContent = s.mark || '--';
     $('rule-count').textContent = `${s.rule_count || 0} 条跳转规则`;
 
+    const leak = parseInt(s.wifi_leak || '0', 10);
+    const leakEl = $('leak');
+    leakEl.textContent = `WiFi 漏包 ${leak}`;
+    leakEl.style.color = leak > 0 ? '#ff6b6b' : '';
+
     const alive = s.daemon === '1';
     $('daemon').textContent = alive ? '运行中' : '未运行';
     $('daemon').className = 'value ' + (alive ? 'ok' : 'err');

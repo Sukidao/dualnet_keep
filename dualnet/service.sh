@@ -25,7 +25,7 @@ LAST_SIG=""
 LAST_IF=""
 LAST_MK=""
 TICK=0
-LAST_RECOVER=0
+LAST_LEAK=0
 
 # 常驻保活进程：向系统持续请求蜂窝网络，阻止 PDN 被释放
 start_keepalive() {
@@ -57,15 +57,14 @@ while true; do
     pgrep -f "notify_status.sh" >/dev/null 2>&1 \
       || ( nohup sh "$MODDIR/scripts/notify_status.sh" >/dev/null 2>&1 & )
 
-    # 兜底自愈：WiFi 已连接但移动数据链路消失 -> 立即拉起（120 秒冷却）
-    if ip -4 addr show dev wlan0 2>/dev/null | grep -q "inet "; then
-      if ! dn_mobile_iface >/dev/null 2>&1; then
-        NOW=$(date +%s)
-        if [ $((NOW - LAST_RECOVER)) -gt 120 ]; then
-          LAST_RECOVER=$NOW
-          dn_log "mobile link lost -> svc data enable"
-          svc data enable 2>/dev/null
-        fi
+    # WiFi 漏包检测：白名单应用不应该有任何包从 wlan0 出去
+    LEAK=$(sh "$MODDIR/scripts/wifi_probe.sh" check 2>/dev/null)
+    if [ -n "$LEAK" ]; then
+      NOW2=$(date +%s)
+      if [ $((NOW2 - LAST_LEAK)) -gt 600 ]; then
+        LAST_LEAK=$NOW2
+        dn_log "WIFI_LEAK: $LEAK"
+        dn_notify "双网络守护" dualnet_alert "检测到白名单应用流量漏到 WiFi: $LEAK"
       fi
     fi
   fi
