@@ -9,8 +9,27 @@ TAG=dualnet
 mkdir -p "$CONFDIR" 2>/dev/null
 [ -f "$APPS_CONF" ] || : > "$APPS_CONF"
 
+# 日志轮转：超过 max 行时只保留后半段，避免无限增长
+dn_rotate() {
+  _f=$1
+  _max=${2:-500}
+  [ -f "$_f" ] || return 0
+  _n=$(wc -l < "$_f" 2>/dev/null)
+  [ "${_n:-0}" -le "$_max" ] && return 0
+  tail -n $((_max / 2)) "$_f" > "$_f.tmp" 2>/dev/null && mv -f "$_f.tmp" "$_f"
+}
+
 dn_log() {
   echo "$(date '+%m-%d %H:%M:%S') $*" >> "$LOG"
+  dn_rotate "$LOG" 800
+}
+
+EVENTS=$CONFDIR/events.log
+
+# 应用网络事件：什么时间、哪个应用、走了哪条网络
+dn_event() {
+  echo "$(date '+%m-%d %H:%M:%S') $*" >> "$EVENTS"
+  dn_rotate "$EVENTS" 600
 }
 
 dn_lock() {
@@ -142,6 +161,7 @@ dn_apply_routes() {
   done
 
   rm -f "$DN_UIDMAP"
+  [ "$n" -gt 0 ] && dn_event "规则重建：$n 个应用 → $IF"
   echo "$IF $MK $n"
 }
 

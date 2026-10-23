@@ -103,6 +103,7 @@ iptables -I OUTPUT -m owner --uid-owner <uid> -o wlan0 \
 | 公网 IP 查询 | 分别通过 WiFi / 蜂窝网络请求，显示两条链路的实际出口 IP |
 | 状态栏常驻通知 | 实时显示当前前台应用走流量还是 WiFi，带应用图标 |
 | WiFi 漏包监控 | 按 UID 统计白名单应用从 WiFi 出去的包，非 0 时发通知告警 |
+| 详细日志 | 记录每次前台切换的应用与所用网络，自动轮转不会无限增长 |
 | 秒开 | 应用列表与图标均三层缓存（后端文件 → localStorage → 版本校验） |
 
 ## 安装
@@ -146,7 +147,8 @@ su -c "sh $CTL publicip"      # 两条链路的公网 IP
 | `keep_data` | 存在则维护数据开关 |
 | `force_route` | 存在则启用分流规则 |
 | `notify_off` | 存在则关闭状态栏通知 |
-| `daemon.log` | 守护进程日志 |
+| `daemon.log` | 守护进程日志（800 行上限，超出保留后半段） |
+| `events.log` | 应用网络事件：时间 + 应用名 + 走的网络（600 行上限） |
 
 ## 构建 dex
 

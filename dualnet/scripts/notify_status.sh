@@ -27,6 +27,17 @@ post() {
   fi
 }
 
+EVLOG=$CONFDIR/events.log
+LAST_PKG=""
+
+log_event() {
+  echo "$(date '+%m-%d %H:%M:%S') $*" >> "$EVLOG"
+  _n=$(wc -l < "$EVLOG" 2>/dev/null)
+  if [ "${_n:-0}" -gt 600 ]; then
+    tail -n 300 "$EVLOG" > "$EVLOG.tmp" 2>/dev/null && mv -f "$EVLOG.tmp" "$EVLOG"
+  fi
+}
+
 LAST=""
 LAST_POST=0
 
@@ -56,6 +67,12 @@ while true; do
   [ -n "$mif" ] && mip=$(ip -4 addr show dev "$mif" 2>/dev/null | sed -n 's/.*inet \([0-9.]*\).*/\1/p' | head -1)
 
   wif=$(cmd wifi status 2>/dev/null | grep -m1 -oE 'SSID: "[^"]*"' | sed 's/SSID: "//;s/"//')
+
+  # 前台应用切换时记录一条网络走向
+  if [ "$pkg" != "$LAST_PKG" ] && [ "$pkg" != "unknown" ]; then
+    LAST_PKG=$pkg
+    log_event "$name → $route"
+  fi
 
   NOW=$(date +%s)
   cur="$pkg|$route|$mip|$wif"

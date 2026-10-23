@@ -377,6 +377,20 @@ async function syncAppsSelection() {
   } catch {}
 }
 
+/* ---------- 日志 ---------- */
+
+async function loadLog() {
+  const pre = $('log');
+  if (pre.classList.contains('hidden')) return;
+  try {
+    const r = await sh(`${SH} ${CTL} log`, 15000);
+    pre.textContent = (r.out || '').trim() || '暂无日志';
+    pre.scrollTop = pre.scrollHeight;
+  } catch {
+    pre.textContent = '读取日志失败';
+  }
+}
+
 /* ---------- 保存 ---------- */
 
 let saveTimer = null;
@@ -451,6 +465,7 @@ function bind() {
     await Promise.all([loadStatus(), loadApps()]);
     loadIcons();
     loadPublicIp();
+    loadLog();
     setTimeout(() => btn.classList.remove('spin'), 700);
     toast('已刷新');
   });
@@ -460,11 +475,7 @@ function bind() {
     const btn = $('log-toggle');
     const hidden = pre.classList.toggle('hidden');
     btn.textContent = hidden ? '展开' : '收起';
-    if (!hidden) {
-      const { out } = await sh(`${SH} ${CTL} log`);
-      pre.textContent = out.trim() || '暂无日志';
-      pre.scrollTop = pre.scrollHeight;
-    }
+    if (!hidden) await loadLog();
   });
 }
 

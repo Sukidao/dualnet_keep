@@ -134,6 +134,7 @@ save)
   R=$(dn_apply_routes)
   dn_unlock
   dn_log "webui save: $CNT apps | $R"
+  dn_event "勾选变更：$CNT 个应用走移动数据"
   echo "ok $CNT $R"
   ;;
 
@@ -225,7 +226,11 @@ publicip)
   ;;
 
 log)
-  tail -40 "$LOG" 2>/dev/null || echo "no log"
+  echo "───── 应用网络 ─────"
+  tail -30 "$CONFDIR/events.log" 2>/dev/null || echo "(暂无记录)"
+  echo
+  echo "───── 守护事件 ─────"
+  tail -25 "$LOG" 2>/dev/null || echo "(暂无记录)"
   ;;
 
 reset)
