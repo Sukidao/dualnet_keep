@@ -1,0 +1,13 @@
+# 调试 / 抓包产物
+tools/
+capture/
+ca/
+*.log
+
+# 截图（文档图除外）
+*.png
+!docs/images/*.png
+
+# 构建中间产物
+build/classes/
+build/dexout/

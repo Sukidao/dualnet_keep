@@ -1,0 +1,13 @@
+* text=auto
+
+# Android shell 脚本必须是 LF，否则设备上会报 syntax error
+*.sh   text eol=lf
+*.prop text eol=lf
+*.java text eol=lf
+*.js   text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+
+*.png binary
+*.dex binary

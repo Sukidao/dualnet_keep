@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>双网络守护</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>双网络守护</h1>
+        <p>WiFi 与移动数据并行</p>
+      </div>
+    </div>
+    <button id="refresh" class="icon-btn" aria-label="刷新">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+      </svg>
+    </button>
+  </header>
+
+  <section class="status-grid" id="status-grid">
+    <div class="card stat">
+      <span class="label">WiFi</span>
+      <span class="value" id="ssid">--</span>
+      <span class="meta" id="wifi-ip">--</span>
+      <span class="meta pubip" id="wifi-pub">公网 —</span>
+    </div>
+    <div class="card stat">
+      <span class="label">移动数据</span>
+      <span class="value" id="iface">--</span>
+      <span class="meta" id="mobile-ip">--</span>
+      <span class="meta pubip" id="mobile-pub">公网 —</span>
+    </div>
+    <div class="card stat">
+      <span class="label">路由标记</span>
+      <span class="value mono" id="mark">--</span>
+      <span class="meta" id="rule-count">0 条规则</span>
+    </div>
+    <div class="card stat">
+      <span class="label">守护进程</span>
+      <span class="value" id="daemon">--</span>
+      <span class="meta" id="version">--</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <div class="row-text">
+        <h2>保持移动数据链路</h2>
+        <p>WiFi 已连接时，防止移动数据被系统关闭</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="keep-data">
+        <span class="track"><span class="thumb"></span></span>
+      </label>
+    </div>
+    <div class="divider"></div>
+    <div class="row">
+      <div class="row-text">
+        <h2>强制应用走移动数据</h2>
+        <p>把勾选应用的流量钉到移动网络，不依赖系统绑定</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="force-route">
+        <span class="track"><span class="thumb"></span></span>
+      </label>
+    </div>
+    <div class="divider"></div>
+    <div class="row">
+      <div class="row-text">
+        <h2>状态栏通知</h2>
+        <p>常驻通知显示当前前台应用走流量还是 WiFi</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="notify">
+        <span class="track"><span class="thumb"></span></span>
+      </label>
+    </div>
+  </section>
+
+  <section class="card apps">
+    <div class="apps-head">
+      <h2>强制走移动数据的应用 <span class="badge" id="app-count">0</span></h2>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+        </svg>
+        <input id="search" type="search" placeholder="搜索应用名或包名" autocomplete="off">
+      </div>
+    </div>
+    <div id="app-list" class="app-list">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+    <p class="hint" id="list-hint">勾选后立即保存并生效</p>
+  </section>
+
+  <section class="card log-card">
+    <div class="apps-head">
+      <h2>运行日志</h2>
+      <button id="log-toggle" class="text-btn">展开</button>
+    </div>
+    <pre id="log" class="log hidden">加载中…</pre>
+  </section>
+
+  <p class="footer">KernelSU 模块 · <span id="ver-foot">--</span></p>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

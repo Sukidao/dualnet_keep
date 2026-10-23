@@ -1,0 +1,6 @@
+id=dualnet_keep
+name=双网络守护
+version=v2.3
+versionCode=5
+author=Sukidayo
+description=WiFi 连接时保持移动数据链路；按 uid 强制指定应用走移动数据（ip rule，connect 即选中正确源地址）。内置 WebUI，应用列表支持中文名与图标，状态栏常驻通知实时显示前台应用走流量还是 WiFi。
